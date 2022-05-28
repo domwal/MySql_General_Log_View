@@ -300,6 +300,18 @@
         }
 
 
+        $order = 'total DESC, a.argument ASC';
+        $orderNum = (int)@$_GET['ordernum'];
+        if (in_array($orderNum, [1,2])) {
+            
+            if ($orderNum == 1) {
+                $order = 'a.argument ASC';
+            }
+            elseif ($orderNum == 2) {
+                $order = 'event_time ASC';
+            }
+        }
+
         $selectString = "
             SELECT
                 COUNT(*) AS total,
@@ -318,13 +330,18 @@
         $stmt = $conn->prepare($selectString);
         $stmt->execute();
 
+        $urlUri = $_SERVER['REQUEST_URI'];
+        if ($posUrlNum = (int) strpos($urlUri, '&')) {
+            $urlUri = substr($urlUri, 0, $posUrlNum);
+        }
+
         echo "<table style='border: solid 1px black;'>";
         echo "
         <tr>
             <th>-</th>
-            <th>TOTAL</th>
-            <th>HORA</th>
-            <th>ARGUMENTO</th>
+            <th><a href='{$urlUri}&ordernum=0'>TOTAL</a></th>
+            <th><a href='{$urlUri}&ordernum=2'>HORA</a></th>
+            <th><a href='{$urlUri}&ordernum=1'>ARGUMENTO</a></th>
         </tr>";
 
         // set the resulting array to associative
