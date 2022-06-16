@@ -212,7 +212,6 @@
                 thread_id DESC 
                 LIMIT 50
         ";
-        // echo $selectString;
 
         $stmt = $conn->prepare($selectString);
         $stmt->execute();
@@ -239,7 +238,7 @@
         foreach ($result as $value) {
             $count++;
             echo "<tr title='" . $value['user_host'] . "'>";
-            echo "  <td style='width:80px;' class='centralizado'><a href='".$_SERVER['REQUEST_URI']."?thread_id=".(int)$value['thread_id']."' target='right_container'>" . $value['thread_id']. "</a></td>";
+            echo "  <td style='width:80px;' class='centralizado'><a href='".$_SERVER['REQUEST_URI']."?thread_id=".(int)$value['thread_id']."&ordernum=2' target='right_container'>" . $value['thread_id']. "</a></td>";
             echo "  <td style='width:80px;' class='centralizado'>" . $value['total']. "</td>";
             echo "  <td style='width:150px;' class='centralizado'>" . $value['event_time_br']. "</td>";
             echo "</tr>";
@@ -324,7 +323,7 @@
             GROUP BY 
                 a.argument
             ORDER BY
-                total DESC, a.argument ASC
+                {$order}
         ";
 
         $stmt = $conn->prepare($selectString);
@@ -334,6 +333,9 @@
         if ($posUrlNum = (int) strpos($urlUri, '&')) {
             $urlUri = substr($urlUri, 0, $posUrlNum);
         }
+
+        echo '<hr>';
+        echo '<a href="'. $_SERVER['REQUEST_URI'] .'#sql" class="button" style="float:right;">Ver a Sql Completa</a>';
 
         echo "<table style='border: solid 1px black;'>";
         echo "
@@ -348,10 +350,12 @@
         // $result = $stmt->setFetchMode(PDO::FETCH_ASSOC);
         $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+        $sqlCompleto = [];
         $j=0;
         foreach ($result as $value) {
             if (in_array($value['command_type'], ['Quit', 'Connect'])) continue;
             $j++;
+            $sqlCompleto[] = utf8_encode($value['argument']);
             echo "<tr>";
             echo "  <td style='width:80px;' class='centralizado'>" . $value['command_type']. "</td>";
             echo "  <td style='width:80px;' class='centralizado'>" . $value['total']. "</td>";
@@ -360,6 +364,16 @@
             echo "</tr>";
         }
         echo "</table>";
+
+
+        echo '<hr>';
+        echo '<h1>Sql Completa</h1>';
+        echo '<a name="sql"></a>';
+        echo '<p>';
+        echo '<textarea rows="20" style="width:100%;">' . implode(";\n", $sqlCompleto) . ';</textarea>';
+        echo '</p>';
+        echo '<hr>';
+        echo '<a href="javascript:window.scrollTo(0, 0);" class="button" style="float:right;">Voltar Topo</a>';
     endif;
     // *********************************************************************************
 ?>
