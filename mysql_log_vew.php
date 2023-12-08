@@ -360,7 +360,7 @@
             echo "  <td style='width:80px;' class='centralizado'>" . $value['command_type']. "</td>";
             echo "  <td style='width:80px;' class='centralizado'>" . $value['total']. "</td>";
             echo "  <td style='width:150px;' class='centralizado'>" . $value['event_time_br']. "</td>";
-            echo "  <td><span class='copyTo' id='{$j}' title='Clique para copiar o texto'>" . utf8_encode($value['argument']) . "</span></td>";
+            echo "  <td><span class='copyTo' id='{$j}' title='Clique para copiar o texto'>" . utf8_encode(str_replace(['<', '>'], ['&lt;', '&rt;'], $value['argument'])) . "</span></td>";
             echo "</tr>";
         }
         echo "</table>";
