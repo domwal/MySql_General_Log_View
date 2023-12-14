@@ -2,9 +2,10 @@
     header('Content-Type: text/html; charset=utf-8');
 
     // MySql Configuration
+    // $mySqlServerName = "192.168.0.1:3306";
     $mySqlServerName = "localhost";
-    $mySqlUserName   = "root";
-    $mySqlPassword   = "";
+    $mySqlUserName   = "userlog";
+    $mySqlPassword   = "yourPasswordHere";
     $mySqlDbName     = 'mysql';
 
     // show logs from mysql users
@@ -13,7 +14,7 @@
         // 'root[root] @ localhost [::1]',
     ];
 
-    // no show logs from users
+    // not show logs from users
     $notMysqlUserHost = [
         '[root] @ localhost [::1]',
         'root[root] @ localhost [::1]',
@@ -21,20 +22,23 @@
     ];
 
     try {
-      $conn = new PDO("mysql:host=$mySqlServerName;dbname={$mySqlDbName}", $mySqlUserName, $mySqlPassword);
-      // set the PDO error mode to exception
-      $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-      // echo "Connected successfully";
+        $conn = new PDO("mysql:host=$mySqlServerName;dbname={$mySqlDbName}", $mySqlUserName, $mySqlPassword);
+        // set the PDO error mode to exception
+        $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        // echo "Connected successfully";
 
-      $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
     } catch(PDOException $e) {
-      echo "Connection failed: " . $e->getMessage();
-      exit();
+        echo "Connection failed: " . $e->getMessage();
+        exit();
     }
+
 ?><!DOCTYPE html>
 <html>
 <head>
     <title>MySql General Log View</title>
+    <meta charset="UTF-8"/>
 
     <style type="text/css">
         a {
@@ -43,7 +47,7 @@
         * {
           box-sizing: border-box;
         }
-        /* unvisited li class='button'nk */
+        /* unvisited li class='button button-red'nk */
         a:link {
           color: darkgreen;
         }
@@ -72,7 +76,6 @@
         }
 
         .button, .button:link, .button:visited {
-          background-color: #f44336; /* Red */
           border: none;
           color: white;
           padding: 10px 22px;
@@ -83,6 +86,12 @@
           transition-duration: 0.4s;
           border-radius: 4px;
           margin: 2px;
+        }
+        .button-blue {
+            background-color: #008CBA; /* Blue */
+        }
+        .button-red {
+            background-color: #f44336; /* Red */
         }
         .button:hover {
           background-color: #4CAF50; /* Green */
@@ -217,8 +226,8 @@
         $stmt->execute();
 
         echo "<div class='row' style='padding-left: 10px;'>";
-        echo "<a id='clear-log-id' href='javascript:;' onclick='limparLog();' data-url='".$_SERVER['REQUEST_URI']."?thread_id=Limpar' target='right_container' class='button'>Limpar Log</a>";
-        echo "<a href='javascript:parent.location.reload();' class='button'>Atualizar a Página</a>";
+        echo "<a id='clear-log-id' href='javascript:;' onclick='limparLog();' data-url='".$_SERVER['REQUEST_URI']."?thread_id=Limpar' target='right_container' class='button button-red'>Limpar Log</a>";
+        echo "<a href='javascript:parent.location.reload();' class='button button-blue'>Atualizar a Página</a>";
         echo "</div>";
         echo "<div class='row'>";
         echo "<div class='esquerda'>";
@@ -271,26 +280,114 @@
             $stmt->execute();
 
             echo "<br>Pronto!";
-            echo "<br><p><a href='javascript:parent.location.reload();' class='button'>Clique Aqui, para Atualizar a Página</a></p>";
+            echo "<br><p><a href='javascript:parent.location.reload();' class='button button-blue'>Clique Aqui, para Atualizar a Página</a></p>";
             exit();
         }
         if (!$threadId && $_GET['thread_id'] == 'Ajuda') {
+            $selectString = "SHOW VARIABLES LIKE '%general_log%'";
+            $stmt = $conn->prepare($selectString);
+            $stmt->execute();
+            $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
             echo "<p>";
-            echo "<h2>Para Habilitar o General Log:</h2>";
+            echo "Instruções para Habilitar o General Log: <a href='javascript:;' onClick='document.getElementById(\"instrucoes-habilitar-log\").style.display = \"block\";'>Clique Aqui</a>";
             echo "</p>";
-            echo "<br>- Editar o C:\\xampp\mysql\bin\my.ini";
+            echo "<div style='display: none; background-color: white; margin-left: 10px; padding: 10px; width: 500px;' id='instrucoes-habilitar-log'>";
+            echo "- Editar o arquivo:";
+            echo "<br> Windows: C:\\xampp\mysql\bin\my.ini";
+            echo "<br> Linux: /etc/mysql/mariadb.conf.d/50-server.cnf";
             echo "<br>----------------------------------------";
             echo "<br>[mysqld]";
             echo "<br>... ";
-            echo "<br>general_log";
-            echo "<br>general_log_file=C:/xampp/mysql/log/mysql_query.log";
+            echo "<br>general_log=1";
+            echo "<br>general_log_file=mysql_query.log";
             echo "<br>log_output = 'TABLE'";
             echo "<br>----------------------------------------";
             echo "<br>Ou em linha de comando";
             echo "<br>----------------------------------------";
             echo "<br>SET global general_log = 1;";
             echo "<br>SET global log_output = 'table';";
+            echo "<br>SET global general_log_file = 'mysql_general_query.log';";
+            echo "</div>";
+            echo "<p>";
+
+            echo "Instruções para criar usuario e procedure no MySql: <a href='javascript:;' onClick='document.getElementById(\"instrucoes-criar-usuario-procedure\").style.display = \"block\";'>Clique Aqui</a>";
+            echo "<div style='display: none; background-color: white; margin-left: 10px; padding: 10px; width: 700px;' id='instrucoes-criar-usuario-procedure'>";
+            echo "
+            <br>-- <strong>Para criar usuario para acessar os logs e limpar o log, executar os seguintes comandos no mysql:</strong>
+            <br>
+            <br>CREATE USER 'userlog'@'%' IDENTIFIED BY 'yourPasswordHere';
+            <br>GRANT SELECT ON mysql.general_log TO 'userlog'@'%';
+            <br>
+            <br>-- <strong>Para permitir limpar</strong>
+            <br>
+            <br>GRANT DROP ON mysql.general_log TO 'userlog'@'%';
+            <br>FLUSH PRIVILEGES;
+            <br>
+            <br>-- <strong>Para poder alterar o general_log por aqui, é necessário criar essa procedure no mysql</strong>
+            <br>
+            <br>DELIMITER //
+            <br>
+            <br>CREATE PROCEDURE mysql.ToggleGeneralLog ( IN log_state BOOLEAN )
+            <br>BEGIN
+            <br>    IF log_state THEN
+            <br>        SET GLOBAL general_log = 1;
+            <br>        SET global log_output = 'table';
+            <br>    ELSE 
+            <br>        SET GLOBAL general_log = 0;
+            <br>    END IF;
+            <br>    
+            <br>END // 
+            <br>
+            <br>DELIMITER;
+            <br>
+            <br>-- <strong>Permissão para o usuário executar a procedure acima</strong>
+            <br>
+            <br>GRANT EXECUTE ON PROCEDURE mysql.ToggleGeneralLog TO 'userlog'@'%';
+            ";
+            echo "</div>";
+            echo "</p>";            
             echo "<br>----------------------------------------";
+            echo "<br>- <strong>Configuração atual do MySql</strong>";
+            echo "<br>----------------------------------------";
+
+            // show variables like '%general_log%';
+            $statusAtualGeneralLog = false;
+            foreach ($result as $value) {
+                if ($value['Variable_name'] == 'general_log' && $value['Value'] == 'ON') {
+                    $statusAtualGeneralLog = true;
+                }
+                echo "<br>" . $value['Variable_name'] . " = " . $value['Value'];
+            }
+
+            // se o general_log estiver desabilitado, exibir um link para habilitar
+            if (!$statusAtualGeneralLog) {
+                echo "<br><br><a href='?thread_id=Habilitar' class='button button-blue'>Clique Aqui, para Habilitar o General Log</a>";
+            }
+            else {
+                echo "<br><br><a href='?thread_id=Desabilitar' class='button button-red'>Clique Aqui, para Desabilitar o General Log</a>";
+            }
+            
+            exit();
+        }
+        elseif (!$threadId && $_GET['thread_id'] == 'Habilitar') {
+            echo "<p><h2>Habilitando o log ...</h2></p>";
+            $selectString = "CALL ToggleGeneralLog(TRUE);";
+            $stmt = $conn->prepare($selectString);
+            $stmt->execute();
+
+            echo "<br>Pronto!";
+            echo "<br><p><a href='javascript:parent.location.reload();' class='button button-blue'>Clique Aqui, para Atualizar a Página</a></p>";
+            exit();
+        }
+        elseif (!$threadId && $_GET['thread_id'] == 'Desabilitar') {
+            echo "<p><h2>Desabilitando o log ...</h2></p>";
+            $selectString = "CALL ToggleGeneralLog(FALSE)";
+            $stmt = $conn->prepare($selectString);
+            $stmt->execute();
+
+            echo "<br>Pronto!";
+            echo "<br><p><a href='javascript:parent.location.reload();' class='button button-blue'>Clique Aqui, para Atualizar a Página</a></p>";
             exit();
         }
         elseif (!$threadId) {
@@ -335,7 +432,7 @@
         }
 
         echo '<hr>';
-        echo '<a href="'. $_SERVER['REQUEST_URI'] .'#sql" class="button" style="float:right;">Ver a Sql Completa</a>';
+        echo '<a href="'. $_SERVER['REQUEST_URI'] .'#sql" class="button button-red" style="float:right;">Ver a Sql Completa</a>';
 
         echo "<table style='border: solid 1px black;'>";
         echo "
@@ -355,12 +452,12 @@
         foreach ($result as $value) {
             if (in_array($value['command_type'], ['Quit', 'Connect'])) continue;
             $j++;
-            $sqlCompleto[] = utf8_encode($value['argument']);
+            $sqlCompleto[] = ($value['argument']);
             echo "<tr>";
             echo "  <td style='width:80px;' class='centralizado'>" . $value['command_type']. "</td>";
             echo "  <td style='width:80px;' class='centralizado'>" . $value['total']. "</td>";
             echo "  <td style='width:150px;' class='centralizado'>" . $value['event_time_br']. "</td>";
-            echo "  <td><span class='copyTo' id='{$j}' title='Clique para copiar o texto'>" . utf8_encode(str_replace(['<', '>'], ['&lt;', '&rt;'], $value['argument'])) . "</span></td>";
+            echo "  <td><span class='copyTo' id='{$j}' title='Clique para copiar o texto'>" . str_replace(['<', '>'], ['&lt;', '&rt;'], $value['argument']) . "</span></td>";
             echo "</tr>";
         }
         echo "</table>";
@@ -373,7 +470,7 @@
         echo '<textarea rows="20" style="width:100%;">' . implode(";\n", $sqlCompleto) . ';</textarea>';
         echo '</p>';
         echo '<hr>';
-        echo '<a href="javascript:window.scrollTo(0, 0);" class="button" style="float:right;">Voltar Topo</a>';
+        echo '<a href="javascript:window.scrollTo(0, 0);" class="button button-red" style="float:right;">Voltar Topo</a>';
     endif;
     // *********************************************************************************
 ?>
